@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios - Mercadinho Conectado{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📈 Relatórios</h2>
+</div>
+
+<div class="relatorios-grid">
+    <div class="card">
+        <h3>💰 Vendas Recentes</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th>Cliente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for venda in vendas %}
+                    <tr>
+                        <td>{{ venda.data }}</td>
+                        <td>
+                            {% if venda.tipo_pagamento == 'dinheiro' %}💵 Dinheiro
+                            {% elif venda.tipo_pagamento == 'cartao' %}💳 Cartão
+                            {% else %}📋 Fiado{% endif %}
+                        </td>
+                        <td>R$ {{ "%.2f"|format(venda.valor_total) }}</td>
+                        <td>{{ venda.cliente_nome or 'À Vista' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>📊 Resumo do Dia</h3>
+        <div class="resumo-stats">
+            <div class="stat-row">
+                <span>Total em Vendas:</span>
+                <strong id="resumo-vendas">Calculando...</strong>
+            </div>
+            <div class="stat-row">
+                <span>Vendas à Vista:</span>
+                <strong id="resumo-vista">Calculando...</strong>
+            </div>
+            <div class="stat-row">
+                <span>Vendas Fiado:</span>
+                <strong id="resumo-fiado">Calculando...</strong>
+            </div>
+        </div>
+        
+        <button class="btn-primary" onclick="exportarDados()" style="margin-top: 20px; width: 100%;">
+            📥 Exportar Dados (JSON)
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function exportarDados() {
+    // Simula exportação de dados para backup/sincronização
+    const dados = {
+        data_exportacao: new Date().toISOString(),
+        versao: '1.0',
+        observacao: 'Dados exportados para sincronização futura com a nuvem'
+    };
+    
+    const blob = new Blob([JSON.stringify(dados, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_mercadinho_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    mostrarToast('Dados exportados com sucesso!', 'success');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Mercadinho Conectado{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h2>📊 Dashboard</h2>
+    
+    <div class="cards-grid">
+        <!-- Card de Vendas Hoje -->
+        <div class="card stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+                <h3>Vendas Hoje</h3>
+                <p class="stat-value" id="vendas-hoje">R$ 0,00</p>
+            </div>
+        </div>
+        
+        <!-- Card de Produtos -->
+        <div class="card stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+                <h3>Produtos</h3>
+                <p class="stat-value" id="total-produtos">0</p>
+                <small>em estoque</small>
+            </div>
+        </div>
+        
+        <!-- Card de Clientes -->
+        <div class="card stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+                <h3>Clientes</h3>
+                <p class="stat-value" id="total-clientes">0</p>
+                <small>cadastrados</small>
+            </div>
+        </div>
+        
+        <!-- Card de Fiado -->
+        <div class="card stat-card alert">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-info">
+                <h3>Contas a Receber</h3>
+                <p class="stat-value" id="total-fiado">R$ 0,00</p>
+                <small>pendentes</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ações Rápidas -->
+    <div class="quick-actions">
+        <h3>⚡ Ações Rápidas</h3>
+        <div class="actions-grid">
+            <a href="{{ url_for('vendas.pdv') }}" class="action-btn primary">
+                <span>🛒</span>
+                <span>Nova Venda</span>
+            </a>
+            <a href="{{ url_for('produtos.listar') }}" class="action-btn">
+                <span>➕</span>
+                <span>Cadastrar Produto</span>
+            </a>
+            <a href="{{ url_for('clientes.listar') }}" class="action-btn">
+                <span>👤</span>
+                <span>Novo Cliente</span>
+            </a>
+            <a href="{{ url_for('fiado.index') }}" class="action-btn warning">
+                <span>💵</span>
+                <span>Receber Dívida</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Carrega estatísticas do dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    carregarEstatisticas();
+});
+
+function carregarEstatisticas() {
+    // Simulação - em produção, fazer requisições AJAX para obter dados reais
+    fetch('/produtos/api/listar')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('total-produtos').textContent = data.length;
+        });
+        
+    fetch('/clientes/api/buscar')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('total-clientes').textContent = data.length;
+        });
+}
+</script>
+{% endblock %}

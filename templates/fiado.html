@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Controle de Fiado - Mercadinho Conectado{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>💳 Controle de Fiado</h2>
+</div>
+
+<div class="fiado-grid">
+    <!-- Resumo por Cliente -->
+    <div class="card">
+        <h3>👥 Clientes Devedores</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Contas Pendentes</th>
+                        <th>Total Devido</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td>
+                            <strong>{{ cliente.nome }}</strong><br>
+                            <small>{{ cliente.telefone }}</small>
+                        </td>
+                        <td>{{ cliente.total_contas or 0 }}</td>
+                        <td class="valor-devido">R$ {{ "%.2f"|format(cliente.total_pendente or 0) }}</td>
+                        <td>
+                            <button class="btn-primary btn-small" onclick="receberDeCliente('{{ cliente.id }}')">
+                                💵 Receber
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Contas Pendentes Detalhadas -->
+    <div class="card">
+        <h3>📋 Contas Pendentes</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Vencimento</th>
+                        <th>Cliente</th>
+                        <th>Valor</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for conta in contas %}
+                    <tr class="{{ 'atrasado' if conta.data_vencimento < hoje else '' }}">
+                        <td>{{ conta.data_vencimento }}</td>
+                        <td>{{ conta.cliente_nome }}</td>
+                        <td class="valor-devido">R$ {{ "%.2f"|format(conta.valor) }}</td>
+                        <td>
+                            <button class="btn-primary btn-small" onclick="registrarPagamento(Number('{{ conta.id }}'), Number('{{ conta.valor }}'))">
+                                Pagar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Pagamento -->
+<div id="modal-pagamento" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModalPagamento()">&times;</span>
+        <h3>💵 Registrar Pagamento</h3>
+        
+        <div class="pagamento-info">
+            <p>Cliente: <strong id="pagamento-cliente"></strong></p>
+            <p>Valor da Dívida: <strong id="pagamento-valor"></strong></p>
+        </div>
+        
+        <div class="form-group">
+            <label for="valor-pago">Valor Recebido (R$)</label>
+            <input type="number" id="valor-pago" step="0.01" min="0">
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="fecharModalPagamento()">Cancelar</button>
+            <button type="button" class="btn-primary" onclick="confirmarPagamento()">Confirmar Pagamento</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let contaAtualId = null;
+let valorDivida = 0;
+
+function receberDeCliente(clienteId) {
+    // Busca contas do cliente e preenche modal
+    fetch(`/fiado/api/contas-cliente/${clienteId}`)
+        .then(r => r.json())
+        .then(contas => {
+            if (contas.length === 0) {
+                mostrarToast('Cliente não possui dívidas pendentes!', 'info');
+                return;
+            }
+            // Pega a primeira conta pendente
+            const conta = contas[0];
+            contaAtualId = conta.id;
+            valorDivida = conta.valor;
+            
+            document.getElementById('pagamento-cliente').textContent = 'Cliente #' + clienteId;
+            document.getElementById('pagamento-valor').textContent = 'R$ ' + valorDivida.toFixed(2);
+            document.getElementById('valor-pago').value = valorDivida.toFixed(2);
+            document.getElementById('modal-pagamento').style.display = 'block';
+        });
+}
+
+function registrarPagamento(contaId, valor) {
+    contaAtualId = contaId;
+    valorDivida = valor;
+    
+    document.getElementById('pagamento-cliente').textContent = 'Conta #' + contaId;
+    document.getElementById('pagamento-valor').textContent = 'R$ ' + valor.toFixed(2);
+    document.getElementById('valor-pago').value = valor.toFixed(2);
+    document.getElementById('modal-pagamento').style.display = 'block';
+}
+
+function fecharModalPagamento() {
+    document.getElementById('modal-pagamento').style.display = 'none';
+    contaAtualId = null;
+}
+
+function confirmarPagamento() {
+    const valorPago = parseFloat(document.getElementById('valor-pago').value);
+    
+    if (!valorPago || valorPago <= 0) {
+        mostrarToast('Informe um valor válido!', 'error');
+        return;
+    }
+    
+    fetch('/fiado/registrar-pagamento', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            conta_id: contaAtualId,
+            valor_pago: valorPago
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            mostrarToast(data.mensagem, 'success');
+            fecharModalPagamento();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            mostrarToast('Erro: ' + data.error, 'error');
+        }
+    });
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('modal-pagamento');
+    if (event.target === modal) fecharModalPagamento();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Produtos - Mercadinho Conectado{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📦 Cadastro de Produtos</h2>
+    <button class="btn-primary" onclick="abrirModalAdicionar()">
+        ➕ Novo Produto
+    </button>
+</div>
+
+<!-- Tabela de Produtos -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="data-table" id="tabela-produtos">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Preço</th>
+                    <th>Estoque</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produto in produtos %}
+                <tr data-id="{{ produto.id }}">
+                    <td>{{ produto.id }}</td>
+                    <td class="nome">{{ produto.nome }}</td>
+                    <td class="preco">R$ {{ "%.2f"|format(produto.preco) }}</td>
+                    <td class="quantidade">{{ produto.quantidade }}</td>
+                    <td class="actions">
+                        <button class="btn-icon" onclick="editarProduto('{{ produto.id }}')" title="Editar">
+                            ✏️
+                        </button>
+                        <button class="btn-icon danger" onclick="excluirProduto('{{ produto.id }}')" title="Excluir">
+                            🗑️
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Adicionar/Editar -->
+<div id="modal-produto" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharModal()">&times;</span>
+        <h3 id="modal-titulo">Novo Produto</h3>
+        
+        <form id="form-produto" method="POST">
+            <input type="hidden" id="produto-id" name="id">
+            
+            <div class="form-group">
+                <label for="nome">Nome do Produto *</label>
+                <input type="text" id="nome" name="nome" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="preco">Preço (R$) *</label>
+                    <input type="number" id="preco" name="preco" step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="quantidade">Quantidade em Estoque *</label>
+                    <input type="number" id="quantidade" name="quantidade" min="0" required>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button type="submit" class="btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let modoEdicao = false;
+
+function abrirModalAdicionar() {
+    modoEdicao = false;
+    document.getElementById('modal-titulo').textContent = 'Novo Produto';
+    document.getElementById('form-produto').action = '/produtos/adicionar';
+    document.getElementById('form-produto').reset();
+    document.getElementById('modal-produto').style.display = 'block';
+}
+
+function editarProduto(id) {
+    modoEdicao = true;
+    const row = document.querySelector(`tr[data-id="${id}"]`);
+    
+    document.getElementById('modal-titulo').textContent = 'Editar Produto';
+    document.getElementById('form-produto').action = `/produtos/editar/${id}`;
+    document.getElementById('produto-id').value = id;
+    document.getElementById('nome').value = row.querySelector('.nome').textContent;
+    document.getElementById('preco').value = parseFloat(row.querySelector('.preco').textContent.replace('R$ ', ''));
+    document.getElementById('quantidade').value = row.querySelector('.quantidade').textContent;
+    
+    document.getElementById('modal-produto').style.display = 'block';
+}
+
+function fecharModal() {
+    document.getElementById('modal-produto').style.display = 'none';
+}
+
+function excluirProduto(id) {
+    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+    
+    fetch(`/produtos/excluir/${id}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                mostrarToast('Produto excluído com sucesso!', 'success');
+                document.querySelector(`tr[data-id="${id}"]`).remove();
+            } else {
+                mostrarToast('Erro ao excluir: ' + data.error, 'error');
+            }
+        });
+}
+
+// Fecha modal ao clicar fora
+window.onclick = function(event) {
+    const modal = document.getElementById('modal-produto');
+    if (event.target === modal) {
+        fecharModal();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mercadinho Conectado{% endblock %}</title>
+    
+    <!-- Estilos CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Ícones (usando emoji como fallback) -->
+    <style>
+        /* Fonte local para funcionar offline */
+        @font-face {
+            font-family: 'LocalFont';
+            src: local('Arial'), local('Helvetica');
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu Lateral -->
+    <nav class="sidebar">
+        <div class="logo">
+            <span class="icon">🏪</span>
+            <h1>Mercadinho<br><small>Conectado</small></h1>
+        </div>
+        
+        <ul class="menu">
+            <li class="{{ 'active' if request.endpoint == 'index' }}">
+                <a href="{{ url_for('index') }}">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if 'produtos' in request.endpoint }}">
+                <a href="{{ url_for('produtos.listar') }}">
+                    <span class="icon">📦</span>
+                    <span>Produtos</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if 'clientes' in request.endpoint }}">
+                <a href="{{ url_for('clientes.listar') }}">
+                    <span class="icon">👥</span>
+                    <span>Clientes</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if 'vendas' in request.endpoint }}">
+                <a href="{{ url_for('vendas.pdv') }}">
+                    <span class="icon">🛒</span>
+                    <span>Vendas</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if 'fiado' in request.endpoint }}">
+                <a href="{{ url_for('fiado.index') }}">
+                    <span class="icon">💳</span>
+                    <span>Fiado</span>
+                </a>
+            </li>
+            <li class="{{ 'active' if request.endpoint == 'relatorios' }}">
+                <a href="{{ url_for('relatorios') }}">
+                    <span class="icon">📈</span>
+                    <span>Relatórios</span>
+                </a>
+            </li>
+        </ul>
+        
+        <!-- Botão de Sincronização (Simulado) -->
+        <div class="sync-section">
+            <button id="btn-sync" class="btn-sync" onclick="sincronizarNuvem()">
+                <span class="icon">☁️</span>
+                <span>Sincronizar</span>
+            </button>
+            <small class="status-offline">🟢 Sistema Offline</small>
+        </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Notificações Toast -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
